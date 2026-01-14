@@ -1,190 +1,144 @@
 # CLINICA
-
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Administradores</title>
+<title>Gestión de Jóvenes</title>
 
 <style>
-body {
-  background: #e8f0ff;
-  font-family: 'Segoe UI', sans-serif;
-  text-align: center;
-}
-
-h2 { margin-top: 20px; }
-
-form {
-  background: #ffffff;
-  width: 400px;
-  margin: 30px auto;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-}
-
-input, select {
-  width: 90%;
-  padding: 10px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 15px;
-}
-
-button {
-  background:#007BFF;
-  color:white;
-  border:none;
-  padding:10px;
-  width: 95%;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-button:hover {
-  background:#0056cc;
-}
-
-table {
-  width: 90%;
-  border-collapse: collapse;
-  margin: 25px auto;
-  box-shadow: 0 0 10px rgba(0,0,0,0.15);
-}
-
-th {
-  background:#007BFF;
-  color:white;
-  padding:12px;
-}
-
-td {
-  padding:10px;
-  border-bottom:1px solid #ddd;
-}
-
-tr:nth-child(even){ background:#f2f6ff; }
-
-a {
-  cursor:pointer;
-  color:#007BFF;
-  font-weight:bold;
-  text-decoration:none;
-}
+body { font-family: Arial; background:#f4f8ff; padding:20px; }
+input { padding:6px; margin:4px; width:230px; }
+button { padding:6px 10px; cursor:pointer; }
+table { border-collapse:collapse; width:100%; margin-top:20px; background:#fff; }
+th,td { border:1px solid #ccc; padding:8px; text-align:center; }
+th { background:#cfe2ff; }
+.msg { padding:10px; margin:10px auto; width:60%; border-radius:5px; }
+.ok { background:#e6ffed; color:#0a7a2d; }
+.err { background:#ffeaea; color:#a10000; }
 </style>
-</head>
 
+</head>
 <body>
 
-<h2>Registro de Administradores</h2>
+<h2 align="center">Gestión de Jóvenes</h2>
 
-<form id="formAdmin">
-  <input type="hidden" id="id">
+<?php
+include("conexion.php");
 
-  Usuario:
-  <input type="text" id="usuario" required>
+$curp = $nombre = $apellido = $fecha = $direccion = "";
+$mensaje = "";
 
-  Contraseña:
-  <input type="password" id="contrasena" required>
+/* ===== GUARDAR ===== */
+if (isset($_POST['guardar'])) {
+    $curp = $_POST['CURP'];
+    $nombre = $_POST['Nombre'];
+    $apellido = $_POST['Apellido'];
+    $fecha = $_POST['Fecha_Nacimiento'];
+    $direccion = $_POST['Direccion'];
 
-  Nombre Completo:
-  <input type="text" id="nombre" required>
+    $sql = "INSERT INTO jovenes VALUES ('$curp','$nombre','$apellido','$fecha','$direccion')";
+    if (mysqli_query($conexion,$sql)) {
+        $mensaje = "<div class='msg ok'>✅ Registro guardado correctamente</div>";
+        // LIMPIAR CAMPOS
+        $curp = $nombre = $apellido = $fecha = $direccion = "";
+    } else {
+        $mensaje = "<div class='msg err'>❌ Error: ".mysqli_error($conexion)."</div>";
+    }
+}
 
-  Nivel de Acceso:
-  <select id="nivel">
-    <option>Básico</option>
-    <option>Medio</option>
-    <option>Avanzado</option>
-  </select>
+/* ===== CARGAR PARA EDITAR ===== */
+if (isset($_POST['editar'])) {
+    $curp = $_POST['CURP'];
+    $q = mysqli_query($conexion,"SELECT * FROM jovenes WHERE CURP='$curp'");
+    if ($row = mysqli_fetch_assoc($q)) {
+        $nombre = $row['Nombre'];
+        $apellido = $row['Apellido'];
+        $fecha = $row['Fecha_Nacimiento'];
+        $direccion = $row['Direccion'];
+    }
+}
 
-  <button type="submit">Guardar</button>
+/* ===== ACTUALIZAR ===== */
+if (isset($_POST['actualizar'])) {
+    $curp = $_POST['CURP'];
+    $nombre = $_POST['Nombre'];
+    $apellido = $_POST['Apellido'];
+    $fecha = $_POST['Fecha_Nacimiento'];
+    $direccion = $_POST['Direccion'];
+
+    $sql = "UPDATE jovenes SET 
+            Nombre='$nombre',
+            Apellido='$apellido',
+            Fecha_Nacimiento='$fecha',
+            Direccion='$direccion'
+            WHERE CURP='$curp'";
+    if (mysqli_query($conexion,$sql)) {
+        $mensaje = "<div class='msg ok'>✏️ Registro actualizado</div>";
+        $curp = $nombre = $apellido = $fecha = $direccion = "";
+    }
+}
+
+/* ===== ELIMINAR ===== */
+if (isset($_POST['eliminar'])) {
+    $curp = $_POST['CURP'];
+    mysqli_query($conexion,"DELETE FROM jovenes WHERE CURP='$curp'");
+    $mensaje = "<div class='msg ok'>🗑️ Registro eliminado</div>";
+}
+?>
+
+<?= $mensaje ?>
+
+<!-- FORMULARIO -->
+<form method="post">
+CURP:<br>
+<input type="text" name="CURP" value="<?= $curp ?>" required><br>
+Nombre:<br>
+<input type="text" name="Nombre" value="<?= $nombre ?>"><br>
+Apellido:<br>
+<input type="text" name="Apellido" value="<?= $apellido ?>"><br>
+Fecha Nacimiento:<br>
+<input type="date" name="Fecha_Nacimiento" value="<?= $fecha ?>"><br>
+Dirección:<br>
+<input type="text" name="Direccion" value="<?= $direccion ?>"><br><br>
+
+<button name="guardar">Guardar</button>
+<button name="actualizar">Actualizar</button>
 </form>
 
+<!-- TABLA -->
 <table>
-<thead>
 <tr>
-  <th>ID</th>
-  <th>Usuario</th>
-  <th>Nombre</th>
-  <th>Nivel</th>
-  <th>Modificar</th>
-  <th>Eliminar</th>
+<th>CURP</th>
+<th>Nombre</th>
+<th>Apellido</th>
+<th>Fecha</th>
+<th>Dirección</th>
+<th>Acciones</th>
 </tr>
-</thead>
-<tbody id="tabla"></tbody>
+
+<?php
+$res = mysqli_query($conexion,"SELECT * FROM jovenes");
+while($f=mysqli_fetch_assoc($res)){
+?>
+<tr>
+<td><?= $f['CURP'] ?></td>
+<td><?= $f['Nombre'] ?></td>
+<td><?= $f['Apellido'] ?></td>
+<td><?= $f['Fecha_Nacimiento'] ?></td>
+<td><?= $f['Direccion'] ?></td>
+<td>
+<form method="post" style="display:inline">
+<input type="hidden" name="CURP" value="<?= $f['CURP'] ?>">
+<button name="editar">Modificar</button>
+<button name="eliminar" onclick="return confirm('¿Eliminar registro?')">Eliminar</button>
+</form>
+</td>
+</tr>
+<?php } ?>
 </table>
 
-<script>
-let admins = JSON.parse(localStorage.getItem("admins")) || [];
-
-const form = document.getElementById("formAdmin");
-const tabla = document.getElementById("tabla");
-
-function mostrar() {
-  tabla.innerHTML = "";
-  admins.forEach((a, i) => {
-    tabla.innerHTML += `
-      <tr>
-        <td>${i}</td>
-        <td>${a.usuario}</td>
-        <td>${a.nombre}</td>
-        <td>${a.nivel}</td>
-        <td><a onclick="editar(${i})">Modificar</a></td>
-        <td><a onclick="eliminar(${i})">Eliminar</a></td>
-      </tr>
-    `;
-  });
-}
-
-form.addEventListener("submit", e => {
-  e.preventDefault();
-
-  const id = document.getElementById("id").value;
-  const admin = {
-    usuario: usuario.value,
-    contrasena: contrasena.value,
-    nombre: nombre.value,
-    nivel: nivel.value
-  };
-
-  if (id === "") {
-    admins.push(admin);
-    alert("Administrador registrado");
-  } else {
-    admins[id] = admin;
-    alert("Administrador actualizado");
-  }
-
-  localStorage.setItem("admins", JSON.stringify(admins));
-  form.reset();
-  document.getElementById("id").value = "";
-  mostrar();
-});
-
-function editar(i) {
-  const a = admins[i];
-  document.getElementById("id").value = i;
-  usuario.value = a.usuario;
-  contrasena.value = a.contrasena;
-  nombre.value = a.nombre;
-  nivel.value = a.nivel;
-}
-
-function eliminar(i) {
-  if (confirm("¿Eliminar administrador?")) {
-    admins.splice(i, 1);
-    localStorage.setItem("admins", JSON.stringify(admins));
-    mostrar();
-  }
-}
-
-mostrar();
-</script>
-
-<a href="jovenes.html">IR A JÓVENES</a><br>
-<a href="usuario.html">Volver a usuario y contraseña</a>
+<br>
+<a href="ims.php">IR A IDMC DEL PACIENTE</a>
 
 </body>
 </html>
